@@ -1,0 +1,31 @@
+name: Push to Cloud Manager
+
+env:
+  # Cloud Manager Repository Info
+  ADOBE_REPO_URL: ${{ secrets.CM_REPO_URL }}
+  ADOBE_USERNAME: ${{ secrets.CM_USERNAME }}
+  ADOBE_PASSWORD: ${{ secrets.CM_PASSWORD }}
+
+# Only run on a push to the specified branches
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout this project
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      # Set git configuration and push branch to cloud manager
+      - name: Push to Cloud Manager repo
+        run: |
+          git config --local credential.helper cache
+          git config --local credential.git.cloudmanager.adobe.com.username "${ADOBE_USERNAME}"
+          git config --local credential.git.cloudmanager.adobe.com.helper '!f() { test "$1" = get && echo "password=${ADOBE_PASSWORD}"; }; f'
+          git remote add adobe "${ADOBE_REPO_URL}"
+          git push -f -v adobe
